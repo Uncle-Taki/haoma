@@ -35,6 +35,12 @@ func NewDatabase() (*Database, error) {
 		return nil, fmt.Errorf("failed to connect to PostgreSQL: %w", err)
 	}
 
+	// Enable UUID extension for PostgreSQL
+	err = db.Exec("CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";").Error
+	if err != nil {
+		return nil, fmt.Errorf("failed to enable UUID extension: %w", err)
+	}
+
 	err = db.AutoMigrate(
 		&session.Session{},
 		&question.Question{},

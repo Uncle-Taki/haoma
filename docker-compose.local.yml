@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: haoma-postgres-local
+    environment:
+      POSTGRES_DB: haoma
+      POSTGRES_USER: haoma
+      POSTGRES_PASSWORD: haoma_secret
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --lc-collate=en_US.UTF-8 --lc-ctype=en_US.UTF-8"
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_local_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haoma"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  haoma:
+    build:
+      context: .
+      dockerfile: Dockerfile.local
+    container_name: haoma-app-local
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: haoma
+      DB_USER: haoma
+      DB_PASSWORD: haoma_secret
+      DB_SSLMODE: disable
+      GIN_MODE: debug
+    volumes:
+      # Mount data directory for questions and scenarios
+      - ./data:/app/data:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+volumes:
+  postgres_local_data:
