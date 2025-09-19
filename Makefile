@@ -141,6 +141,11 @@ dev-env-stop: ## Stop development environment
 	@echo "🛑 Stopping development environment..."
 	docker-compose -f docker-compose.dev.yml down
 
+dev-env-build: ## Build development environment
+	@echo "🏗️ Building development environment..."
+	docker-compose -f docker-compose.dev.yml up --build -d
+
+
 dev-setup: deps install-tools pg-start swagger seed ## Complete development setup
 	@echo "🎪 Haoma's carnival is ready for development!"
 	@echo ""

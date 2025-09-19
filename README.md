@@ -21,17 +21,11 @@ Built with **Go + Gin** following **Hexagonal/DDD** principles:
 
 ### Setup & Run
 ```bash
-# Clone the mystical realm
-git clone <repository-url>
-cd haoma
-
-# Complete development setup
-make dev-setup
-
 # Start the carnival
-make dev          # With hot reload
-# OR
-make run          # Standard mode
+make dev-env-build
+
+# fill the database with excel files(when docker is running)
+make seed-excel
 ```
 
 ### Alternative Setup
