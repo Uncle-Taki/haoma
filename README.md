@@ -128,7 +128,7 @@ The carnival follows ancient laws:
 
 ## Etymology 📜
 
-**Haoma** (هوما) derives from Persian Zoroastrian mythology—the divine bird of fortune and the sacred plant of immortality. In our digital realm, it represents the transformative journey from student to cyber-guardian.
+**Haoma** (هوم) derives from Persian Zoroastrian mythology—the divine bird of fortune and the sacred plant of immortality. In our digital realm, it represents the transformative journey from student to cyber-guardian.
 
 ## Credits 🙏
 
