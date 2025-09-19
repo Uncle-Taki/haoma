@@ -1,0 +1,20 @@
+# Haoma - Black-Box Carnival Environment Configuration
+# Copy this file to .env and adjust values as needed
+
+# Database Configuration (PostgreSQL)
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=haoma
+DB_USER=haoma
+DB_PASSWORD=haoma_secret
+DB_SSLMODE=disable
+
+# Server Configuration
+GIN_MODE=debug
+PORT=8080
+
+# Development Settings
+LOG_LEVEL=debug
+
+# Security Configuration
+JWT_SECRET=your_super_secret_jwt_key_change_in_production_at_least_32_characters

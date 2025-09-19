@@ -1,0 +1,445 @@
+basePath: /api/v1
+definitions:
+  internal_adapters_http.LeaderboardEntry:
+    properties:
+      achieved_at:
+        example: "2025-09-18T14:30:45Z"
+        type: string
+      completion_time:
+        example: 38m45s
+        type: string
+      final_score:
+        example: 850
+        type: integer
+      player_name:
+        example: Rostam
+        type: string
+      rank:
+        example: 1
+        type: integer
+    type: object
+  internal_adapters_http.LeaderboardResponse:
+    properties:
+      entries:
+        items:
+          $ref: '#/definitions/internal_adapters_http.LeaderboardEntry'
+        type: array
+    type: object
+  internal_adapters_http.LoginRequest:
+    properties:
+      email:
+        example: rostam@haoma.dev
+        type: string
+      password:
+        example: cyber_guardian_2024
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  internal_adapters_http.LoginResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      expires_in:
+        description: seconds
+        example: 86400
+        type: integer
+      message:
+        example: Welcome back to the carnival!
+        type: string
+      player:
+        $ref: '#/definitions/internal_adapters_http.PlayerInfo'
+      token_type:
+        example: Bearer
+        type: string
+    type: object
+  internal_adapters_http.NodeResponse:
+    properties:
+      number:
+        example: 1
+        type: integer
+      questions:
+        items:
+          $ref: '#/definitions/internal_adapters_http.QuestionResponse'
+        type: array
+    type: object
+  internal_adapters_http.PlayerInfo:
+    properties:
+      email:
+        example: rostam@haoma.dev
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      name:
+        example: Rostam Dastan
+        type: string
+    type: object
+  internal_adapters_http.QuestionResponse:
+    properties:
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+      option_a:
+        example: Input validation
+        type: string
+      option_b:
+        example: Database queries
+        type: string
+      option_c:
+        example: File uploads
+        type: string
+      option_d:
+        example: Network protocols
+        type: string
+      text:
+        example: What does SQL injection exploit?
+        type: string
+    type: object
+  internal_adapters_http.SignupRequest:
+    properties:
+      email:
+        example: rostam@haoma.dev
+        type: string
+      name:
+        example: Rostam Dastan
+        maxLength: 50
+        minLength: 2
+        type: string
+      password:
+        example: cyber_guardian_2024
+        minLength: 6
+        type: string
+    required:
+    - email
+    - name
+    - password
+    type: object
+  internal_adapters_http.SignupResponse:
+    properties:
+      email:
+        example: rostam@haoma.dev
+        type: string
+      id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+      message:
+        example: Welcome to Haoma's carnival! Your account has been created.
+        type: string
+      name:
+        example: Rostam Dastan
+        type: string
+    type: object
+  internal_adapters_http.StartNodeRequest:
+    properties:
+      node_code:
+        example: NODE_CRYPTO_001
+        type: string
+      session_id:
+        example: 123e4567-e89b-12d3-a456-426614174001
+        type: string
+    required:
+    - node_code
+    type: object
+  internal_adapters_http.StartNodeResponse:
+    properties:
+      message:
+        example: "\U0001F3AA Welcome to Node 1: Cryptography! Answer all questions
+          to continue."
+        type: string
+      node:
+        $ref: '#/definitions/internal_adapters_http.NodeResponse'
+      session_id:
+        example: 123e4567-e89b-12d3-a456-426614174001
+        type: string
+    type: object
+  internal_adapters_http.StartSessionRequest:
+    type: object
+  internal_adapters_http.StartSessionResponse:
+    properties:
+      message:
+        example: Session created! Scan a node QR code to begin your journey.
+        type: string
+      session_id:
+        example: 550e8400-e29b-41d4-a716-446655440000
+        type: string
+    type: object
+  internal_adapters_http.SubmitAnswerRequest:
+    properties:
+      answer:
+        example: B
+        type: string
+      question_id:
+        example: 550e8400-e29b-41d4-a716-446655440001
+        type: string
+    required:
+    - answer
+    - question_id
+    type: object
+  internal_adapters_http.SubmitAnswerResponse:
+    properties:
+      current_score:
+        example: 320
+        type: integer
+      is_correct:
+        example: true
+        type: boolean
+      message:
+        example: Correct! 4 questions remaining in this node.
+        type: string
+      node_completed:
+        example: false
+        type: boolean
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Persian god meets cyber trials. A 7-node security quiz for ELECOMP
+    1404.
+  title: Haoma - Black-Box Carnival API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login with email and password to verify player credentials
+      parameters:
+      - description: Player login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.LoginResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Authenticate a player
+      tags:
+      - Authentication
+  /auth/profile:
+    get:
+      description: Retrieve player profile from JWT token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.PlayerInfo'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get authenticated player profile information
+      tags:
+      - Authentication
+  /auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new player account with name, email and password
+      parameters:
+      - description: Player registration information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.SignupRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_adapters_http.SignupResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Register a new player for the carnival
+      tags:
+      - Authentication
+  /leaderboard:
+    get:
+      description: Retrieve the taxteh-ye sharaf showing the greatest champions
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.LeaderboardResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Get the top leaderboard
+      tags:
+      - Leaderboard
+  /nodes/scan:
+    post:
+      consumes:
+      - application/json
+      description: Scan a QR code at a physical location to unlock and start a carnival
+        node
+      parameters:
+      - description: QR code scan information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.StartNodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.StartNodeResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Scan QR code to access a carnival node
+      tags:
+      - Nodes
+  /sessions/{id}/answer:
+    post:
+      consumes:
+      - application/json
+      description: Answer a riddle from the current carnival node
+      parameters:
+      - description: Session ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Answer submission
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.SubmitAnswerRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.SubmitAnswerResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Submit an answer to a question
+      tags:
+      - Sessions
+  /sessions/start:
+    post:
+      consumes:
+      - application/json
+      description: Begin a mystical journey through carnival nodes of cyber trials
+      parameters:
+      - description: Player information
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_adapters_http.StartSessionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_adapters_http.StartSessionResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Start a new carnival session
+      tags:
+      - Sessions
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer" followed by a space and JWT token.
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

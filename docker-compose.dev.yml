@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: haoma-postgres
+    environment:
+      POSTGRES_DB: haoma
+      POSTGRES_USER: haoma
+      POSTGRES_PASSWORD: haoma_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haoma"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  haoma:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: haoma-app-dev
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_NAME: haoma
+      DB_USER: haoma
+      DB_PASSWORD: haoma_secret
+      DB_SSLMODE: disable
+      GIN_MODE: debug
+    volumes:
+      # Mount source code for hot reload
+      - .:/app
+      - /app/tmp
+      - /app/.git
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
