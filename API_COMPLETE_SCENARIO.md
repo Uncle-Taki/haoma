@@ -128,6 +128,8 @@ curl -X POST http://localhost:8080/api/v1/nodes/scan \
   "session_id": "123e4567-e89b-12d3-a456-426614174001",
   "node": {
     "number": 1,
+    "category_name": "Cryptography",
+    "category_description": "Learn about encryption, decryption, and cryptographic protocols",
     "questions": [
       {
         "id": "q1-uuid-here",
@@ -173,6 +175,7 @@ curl -X POST http://localhost:8080/api/v1/sessions/123e4567-e89b-12d3-a456-42661
 ```json
 {
   "is_correct": true,
+  "description": "AES (Advanced Encryption Standard) is designed specifically for data protection through symmetric encryption.",
   "node_completed": false,
   "message": "✅ Correct! 3 questions remaining in this node."
 }
@@ -182,6 +185,7 @@ curl -X POST http://localhost:8080/api/v1/sessions/123e4567-e89b-12d3-a456-42661
 ```json
 {
   "is_correct": true,
+  "description": "Excellent! This completes your understanding of this category.",
   "node_completed": true,
   "current_score": 580,
   "message": "🎪 Node completed! Check your updated leaderboard position. Find the next location to continue."
@@ -207,6 +211,7 @@ curl -X POST http://localhost:8080/api/v1/nodes/scan \
 ```json
 {
   "is_correct": true,
+  "description": "Outstanding! You have mastered all carnival challenges.",
   "node_completed": true,
   "current_score": 2847,
   "message": "🎉 Congratulations! You've completed all 7 nodes of the carnival!"
@@ -282,7 +287,7 @@ curl -X GET http://localhost:8080/api/v1/leaderboard
 - **7 Categories**: System selects 7 unique categories from 8 available
 - **35 Questions Total**: 5 questions per node (4 category + 1 fun)
 - **Scoring Formula**: `(correct_answers × 100) - time_penalty`
-- **Time Penalty**: 1 point deducted per 30 seconds elapsed
+- **Time Penalty**: 1 point deducted per 20 seconds elapsed
 - **Session Limit**: 2 hours maximum
 - **PhDT Questions**: Binary YES/NO only (options C/D are null)
 - **Leaderboard**: Top 10, ties broken by faster completion time
