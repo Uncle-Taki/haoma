@@ -57,6 +57,12 @@ definitions:
     type: object
   internal_adapters_http.NodeResponse:
     properties:
+      category_description:
+        example: Learn about encryption, decryption, and cryptographic protocols
+        type: string
+      category_name:
+        example: Cryptography
+        type: string
       number:
         example: 1
         type: integer

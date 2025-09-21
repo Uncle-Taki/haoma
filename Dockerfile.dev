@@ -1,6 +1,6 @@
 # Haoma Development - Hot Reload with Air
 FROM golang:1.23-alpine
-
+RUN go env -w GOPROXY=https://goproxy.io,direct
 # Install Air for hot reload and other development tools (compatible with Go 1.23)
 RUN go install github.com/cosmtrek/air@v1.49.0
 

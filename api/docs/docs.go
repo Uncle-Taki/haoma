@@ -454,6 +454,14 @@ const docTemplate = `{
         "internal_adapters_http.NodeResponse": {
             "type": "object",
             "properties": {
+                "category_description": {
+                    "type": "string",
+                    "example": "Learn about encryption, decryption, and cryptographic protocols"
+                },
+                "category_name": {
+                    "type": "string",
+                    "example": "Cryptography"
+                },
                 "number": {
                     "type": "integer",
                     "example": 1
