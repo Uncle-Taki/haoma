@@ -37,7 +37,7 @@ func (h *CarnivalHandler) ScanNodeQR(c *gin.Context) {
 		return
 	}
 
-	resultSessionID, node, err := h.service.ScanNodeQR(playerID.(uuid.UUID), req.NodeCode, req.SessionID)
+	resultSessionID, node, category, err := h.service.ScanNodeQR(playerID.(uuid.UUID), req.NodeCode, req.SessionID)
 	if err != nil {
 		if err.Error() == "node not found" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Invalid QR code - node not found"})
@@ -52,18 +52,20 @@ func (h *CarnivalHandler) ScanNodeQR(c *gin.Context) {
 	}
 
 	nodeResp := NodeResponse{
-		Number:    node.Number,
-		Questions: make([]QuestionResponse, len(node.Questions)),
+		Number:              node.Number,
+		CategoryName:        category.Name,
+		CategoryDescription: category.Description,
+		Questions:           make([]QuestionResponse, len(node.Questions)),
 	}
 
-	for i, q := range node.Questions {
+	for i, question := range node.Questions {
 		nodeResp.Questions[i] = QuestionResponse{
-			ID:      q.ID,
-			Text:    q.Text,
-			OptionA: q.OptionA,
-			OptionB: q.OptionB,
-			OptionC: q.OptionC,
-			OptionD: q.OptionD,
+			ID:      question.ID,
+			Text:    question.Text,
+			OptionA: question.OptionA,
+			OptionB: question.OptionB,
+			OptionC: question.OptionC,
+			OptionD: question.OptionD,
 		}
 	}
 

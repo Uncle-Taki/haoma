@@ -17,7 +17,7 @@ const (
 	// Scoring system
 	CORRECT_ANSWER_MULTIPLIER     = 100 // Points per correct answer
 	PENALTY_MULTIPLIER            = 10  // Points per penalty point
-	TIME_PENALTY_INTERVAL_SECONDS = 30  // Seconds per penalty point
+	TIME_PENALTY_INTERVAL_SECONDS = 20  // Seconds per penalty point
 
 	// Node validation
 	MIN_NODE_NUMBER = 1 // Minimum valid node number

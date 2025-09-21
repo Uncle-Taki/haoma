@@ -23,21 +23,21 @@ func NewSessionRepository(db *gorm.DB) *SessionRepository {
 	return &SessionRepository{db: db}
 }
 
-func (r *SessionRepository) Save(s *session.Session) error {
-	return r.db.Create(s).Error
+func (r *SessionRepository) Save(session *session.Session) error {
+	return r.db.Create(session).Error
 }
 
 func (r *SessionRepository) FindByID(id uuid.UUID) (*session.Session, error) {
-	var s session.Session
-	err := r.db.First(&s, "id = ?", id).Error
+	var foundSession session.Session
+	err := r.db.First(&foundSession, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("session not found")
 	}
-	return &s, err
+	return &foundSession, err
 }
 
-func (r *SessionRepository) Update(s *session.Session) error {
-	return r.db.Save(s).Error
+func (r *SessionRepository) Update(session *session.Session) error {
+	return r.db.Save(session).Error
 }
 
 // QuestionRepository implements question persistence
@@ -78,12 +78,12 @@ func (r *QuestionRepository) GetUnusedFunQuestionsForSession(sessionID uuid.UUID
 }
 
 func (r *QuestionRepository) FindByID(id uuid.UUID) (*question.Question, error) {
-	var q question.Question
-	err := r.db.Preload("Category").First(&q, "id = ?", id).Error
+	var foundQuestion question.Question
+	err := r.db.Preload("Category").First(&foundQuestion, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("question not found")
 	}
-	return &q, err
+	return &foundQuestion, err
 }
 
 // PlayerRepository implements player persistence
@@ -95,30 +95,30 @@ func NewPlayerRepository(db *gorm.DB) *PlayerRepository {
 	return &PlayerRepository{db: db}
 }
 
-func (r *PlayerRepository) Save(p *player.Player) error {
-	return r.db.Create(p).Error
+func (r *PlayerRepository) Save(player *player.Player) error {
+	return r.db.Create(player).Error
 }
 
 func (r *PlayerRepository) FindByID(id uuid.UUID) (*player.Player, error) {
-	var p player.Player
-	err := r.db.First(&p, "id = ?", id).Error
+	var foundPlayer player.Player
+	err := r.db.First(&foundPlayer, "id = ?", id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("player not found")
 	}
-	return &p, err
+	return &foundPlayer, err
 }
 
 func (r *PlayerRepository) FindByEmail(email string) (*player.Player, error) {
-	var p player.Player
-	err := r.db.Where("email = ?", email).First(&p).Error
+	var foundPlayer player.Player
+	err := r.db.Where("email = ?", email).First(&foundPlayer).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		return nil, errors.New("player not found")
 	}
-	return &p, err
+	return &foundPlayer, err
 }
 
-func (r *PlayerRepository) SaveAttempt(a *player.Attempt) error {
-	return r.db.Create(a).Error
+func (r *PlayerRepository) SaveAttempt(attempt *player.Attempt) error {
+	return r.db.Create(attempt).Error
 }
 
 func (r *PlayerRepository) GetAttemptsBySessionAndCategory(sessionID, categoryID uuid.UUID) ([]player.Attempt, error) {

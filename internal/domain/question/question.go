@@ -10,12 +10,12 @@ import (
 type Question struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key"`
 	Text        string    `json:"text" gorm:"type:text;not null"`
-	OptionA     string    `json:"option_a" gorm:"not null"`
-	OptionB     string    `json:"option_b" gorm:"not null"`
-	OptionC     *string   `json:"option_c,omitempty"`
-	OptionD     *string   `json:"option_d,omitempty"`
+	OptionA     string    `json:"option_a" gorm:"type:text;not null"`
+	OptionB     string    `json:"option_b" gorm:"type:text;not null"`
+	OptionC     *string   `json:"option_c,omitempty" gorm:"type:text"`
+	OptionD     *string   `json:"option_d,omitempty" gorm:"type:text"`
 	Correct     string    `json:"-" gorm:"not null"`
-	Explanation string    `json:"explanation"`
+	Explanation string    `json:"explanation" gorm:"type:text"`
 	CategoryID  uuid.UUID `json:"category_id" gorm:"type:uuid;not null"`
 	Category    Category  `json:"category" gorm:"foreignKey:CategoryID"`
 }
@@ -23,9 +23,9 @@ type Question struct {
 // Category represents knowledge domains
 type Category struct {
 	ID          uuid.UUID `json:"id" gorm:"type:uuid;primary_key"`
-	Name        string    `json:"name" gorm:"unique;not null"`
-	Title       string    `json:"title"`
-	Description string    `json:"description"`
+	Name        string    `json:"name" gorm:"type:text;unique;not null"`
+	Title       string    `json:"title" gorm:"type:text"`
+	Description string    `json:"description" gorm:"type:text"`
 	IsPhDT      bool      `json:"is_phdt" gorm:"default:false"`
 }
 
@@ -36,12 +36,12 @@ type Node struct {
 	Questions  []Question `json:"questions"`
 }
 
-func (q *Question) IsBinaryChoice() bool {
-	return q.OptionC == nil && q.OptionD == nil
+func (question *Question) IsBinaryChoice() bool {
+	return question.OptionC == nil && question.OptionD == nil
 }
 
-func (q *Question) ValidateAnswer(answer string) bool {
-	log.Println("Correct answer:", q.Correct)
+func (question *Question) ValidateAnswer(answer string) bool {
+	log.Println("Correct answer:", question.Correct)
 	log.Println("Answer:", answer)
-	return q.Correct == answer
+	return question.Correct == answer
 }

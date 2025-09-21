@@ -43,18 +43,18 @@ func NewPlayer(name, email, password string) (*Player, error) {
 	}, nil
 }
 
-func (p *Player) ValidatePassword(password string) bool {
-	err := bcrypt.CompareHashAndPassword([]byte(p.PasswordHash), []byte(password))
+func (player *Player) ValidatePassword(password string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(player.PasswordHash), []byte(password))
 	return err == nil
 }
 
-func (p *Player) UpdatePassword(newPassword string) error {
+func (player *Player) UpdatePassword(newPassword string) error {
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	p.PasswordHash = string(hashedPassword)
-	p.UpdatedAt = time.Now()
+	player.PasswordHash = string(hashedPassword)
+	player.UpdatedAt = time.Now()
 	return nil
 }
 
