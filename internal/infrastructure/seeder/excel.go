@@ -147,7 +147,7 @@ func (s *ExcelSeeder) seedQuestions(filePath string) error {
 			optionDPtr = &optionD
 		} // For PhDT, leave C and D as nil
 
-		q := question.Question{
+		newQuestion := question.Question{
 			ID:          uuid.New(),
 			Text:        text,
 			OptionA:     optionA,
@@ -159,7 +159,7 @@ func (s *ExcelSeeder) seedQuestions(filePath string) error {
 			CategoryID:  category.ID,
 		}
 
-		result := s.db.Create(&q)
+		result := s.db.Create(&newQuestion)
 		if result.Error != nil {
 			log.Printf("Error seeding question: %v", result.Error)
 			continue

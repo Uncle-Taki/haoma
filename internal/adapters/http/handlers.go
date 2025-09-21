@@ -96,8 +96,10 @@ type StartNodeResponse struct {
 
 // NodeResponse represents a carnival node (tent) with questions
 type NodeResponse struct {
-	Number    int                `json:"number" example:"1"`
-	Questions []QuestionResponse `json:"questions"`
+	Number              int                `json:"number" example:"1"`
+	CategoryName        string             `json:"category_name" example:"Cryptography"`
+	CategoryDescription string             `json:"category_description" example:"Learn about encryption, decryption, and cryptographic protocols"`
+	Questions           []QuestionResponse `json:"questions"`
 }
 
 // QuestionResponse represents a question without the correct answer

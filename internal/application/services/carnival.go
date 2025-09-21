@@ -22,9 +22,9 @@ type CarnivalService struct {
 }
 
 type SessionRepository interface {
-	Save(s *session.Session) error
+	Save(session *session.Session) error
 	FindByID(id uuid.UUID) (*session.Session, error)
-	Update(s *session.Session) error
+	Update(session *session.Session) error
 }
 
 type QuestionRepository interface {
@@ -35,10 +35,10 @@ type QuestionRepository interface {
 }
 
 type PlayerRepository interface {
-	Save(p *player.Player) error
+	Save(player *player.Player) error
 	FindByID(id uuid.UUID) (*player.Player, error)
 	FindByEmail(email string) (*player.Player, error)
-	SaveAttempt(a *player.Attempt) error
+	SaveAttempt(attempt *player.Attempt) error
 	GetAttemptsBySessionAndCategory(sessionID, categoryID uuid.UUID) ([]player.Attempt, error)
 	HasAnsweredQuestion(sessionID, questionID uuid.UUID) (bool, error)
 }
@@ -63,13 +63,13 @@ func NewCarnivalService(
 	}
 }
 
-func (c *CarnivalService) CreatePlayer(p *player.Player) error {
-	_, err := c.playerRepo.FindByEmail(p.Email)
+func (c *CarnivalService) CreatePlayer(player *player.Player) error {
+	_, err := c.playerRepo.FindByEmail(player.Email)
 	if err == nil {
 		return errors.New("player already exists")
 	}
 
-	return c.playerRepo.Save(p)
+	return c.playerRepo.Save(player)
 }
 
 func (c *CarnivalService) GetPlayerByID(id uuid.UUID) (*player.Player, error) {
@@ -91,7 +91,7 @@ func (c *CarnivalService) CreateSession(playerID uuid.UUID) (*session.Session, e
 		return nil, err
 	}
 
-	s := &session.Session{
+	newSession := &session.Session{
 		ID:             uuid.New(),
 		PlayerID:       playerID,
 		StartedAt:      time.Now(),
@@ -101,50 +101,50 @@ func (c *CarnivalService) CreateSession(playerID uuid.UUID) (*session.Session, e
 		NodeStartTimes: make(session.IntMap),
 	}
 
-	if err := c.sessionRepo.Save(s); err != nil {
+	if err := c.sessionRepo.Save(newSession); err != nil {
 		return nil, err
 	}
 
-	return s, nil
+	return newSession, nil
 }
 
-func (c *CarnivalService) ScanNodeQR(playerID uuid.UUID, nodeCode string, sessionID *uuid.UUID) (*uuid.UUID, *question.Node, error) {
+func (c *CarnivalService) ScanNodeQR(playerID uuid.UUID, nodeCode string, sessionID *uuid.UUID) (*uuid.UUID, *question.Node, *question.Category, error) {
 	_, err := c.playerRepo.FindByID(playerID)
 	if err != nil {
-		return nil, nil, errors.New("player not found")
+		return nil, nil, nil, errors.New("player not found")
 	}
 
 	nodeNumber, err := c.parseNodeCode(nodeCode)
 	if err != nil {
-		return nil, nil, errors.New("node not found")
+		return nil, nil, nil, errors.New("node not found")
 	}
 
-	var s *session.Session
+	var currentSession *session.Session
 
 	if sessionID != nil {
-		s, err = c.sessionRepo.FindByID(*sessionID)
+		currentSession, err = c.sessionRepo.FindByID(*sessionID)
 		if err != nil {
-			return nil, nil, errors.New("session not found")
+			return nil, nil, nil, errors.New("session not found")
 		}
-		if !s.IsActive() {
-			return nil, nil, errors.New("session expired")
+		if !currentSession.IsActive() {
+			return nil, nil, nil, errors.New("session expired")
 		}
 	} else {
-		s, err = c.CreateSession(playerID)
+		currentSession, err = c.CreateSession(playerID)
 		if err != nil {
-			return nil, nil, err
+			return nil, nil, nil, err
 		}
 	}
 
-	if nodeNumber > len([]string(s.Categories)) {
-		return nil, nil, errors.New("invalid node number for session")
+	if nodeNumber > len([]string(currentSession.Categories)) {
+		return nil, nil, nil, errors.New("invalid node number for session")
 	}
 
-	assignedCategoryName := ([]string(s.Categories))[nodeNumber-1] // Arrays are 0-indexed, nodes are 1-indexed
+	assignedCategoryName := ([]string(currentSession.Categories))[nodeNumber-1] // Arrays are 0-indexed, nodes are 1-indexed
 
 	categories, err := c.questionRepo.GetCategories()
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
 	var nodeCategory *question.Category
@@ -156,47 +156,48 @@ func (c *CarnivalService) ScanNodeQR(playerID uuid.UUID, nodeCode string, sessio
 	}
 
 	if nodeCategory == nil {
-		return nil, nil, errors.New("assigned category not found")
+		return nil, nil, nil, errors.New("assigned category not found")
 	}
 
-	node, err := c.generateNodeFromCategory(nodeNumber, nodeCategory.ID, s.ID)
+	node, err := c.generateNodeFromCategory(nodeNumber, nodeCategory.ID, currentSession.ID)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, nil, err
 	}
 
-	if _, exists := s.NodeStartTimes[nodeNumber]; !exists {
-		if s.NodeStartTimes == nil {
-			s.NodeStartTimes = make(session.IntMap)
+	if _, exists := currentSession.NodeStartTimes[nodeNumber]; !exists {
+		if currentSession.NodeStartTimes == nil {
+			currentSession.NodeStartTimes = make(session.IntMap)
 		}
-		s.NodeStartTimes[nodeNumber] = time.Now().Unix()
+		currentSession.NodeStartTimes[nodeNumber] = time.Now().Unix()
 	}
 
-	s.CurrentNode = nodeNumber
-	if err := c.sessionRepo.Update(s); err != nil {
-		return nil, nil, err
+	currentSession.CurrentNode = nodeNumber
+	if err := c.sessionRepo.Update(currentSession); err != nil {
+		return nil, nil, nil, err
 	}
 
-	return &s.ID, node, nil
+	return &currentSession.ID, node, nodeCategory, nil
 }
 
 type AnswerResult struct {
 	IsCorrect               bool
+	Description             string
 	NodeCompleted           bool
 	QuestionsAnsweredInNode int
 	CurrentScore            int
 }
 
 func (c *CarnivalService) SubmitAnswer(sessionID, questionID uuid.UUID, answer string) (*AnswerResult, error) {
-	s, err := c.sessionRepo.FindByID(sessionID)
+	currentSession, err := c.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return nil, err
 	}
 
-	if !s.IsActive() {
+	if !currentSession.IsActive() {
 		return nil, errors.New("session expired or finished")
 	}
 
-	q, err := c.questionRepo.FindByID(questionID)
+	question, err := c.questionRepo.FindByID(questionID)
 	if err != nil {
 		return nil, err
 	}
@@ -209,19 +210,19 @@ func (c *CarnivalService) SubmitAnswer(sessionID, questionID uuid.UUID, answer s
 		return nil, errors.New("question already answered")
 	}
 
-	isCorrect := q.ValidateAnswer(answer)
+	isCorrect := question.ValidateAnswer(answer)
 
 	attempt := player.NewAttempt(sessionID, questionID, answer, isCorrect)
 	if err := c.playerRepo.SaveAttempt(attempt); err != nil {
 		return nil, err
 	}
 
-	s.Score.Total++
+	currentSession.Score.Total++
 	if isCorrect {
-		s.Score.Correct++
+		currentSession.Score.Correct++
 	}
 
-	currentNodeCategoryID, err := c.getCurrentNodeCategoryID(sessionID, s.CurrentNode)
+	currentNodeCategoryID, err := c.getCurrentNodeCategoryID(sessionID, currentSession.CurrentNode)
 	if err != nil {
 		return nil, err
 	}
@@ -235,24 +236,25 @@ func (c *CarnivalService) SubmitAnswer(sessionID, questionID uuid.UUID, answer s
 
 	result := &AnswerResult{
 		IsCorrect:               isCorrect,
+		Description:             question.Explanation,
 		NodeCompleted:           nodeCompleted,
 		QuestionsAnsweredInNode: questionsInCurrentNode,
 	}
 
 	if nodeCompleted {
-		if err := c.addNodeTimePenalty(s, s.CurrentNode); err != nil {
+		if err := c.addNodeTimePenalty(currentSession, currentSession.CurrentNode); err != nil {
 			return nil, err
 		}
 
-		currentScore := s.CalculateScore()
+		currentScore := currentSession.CalculateScore()
 		result.CurrentScore = currentScore.Final
 
-		if err := c.updateLeaderboardAfterNode(s, result); err != nil {
+		if err := c.updateLeaderboardAfterNode(currentSession, result); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := c.sessionRepo.Update(s); err != nil {
+	if err := c.sessionRepo.Update(currentSession); err != nil {
 		return nil, err
 	}
 
@@ -303,16 +305,16 @@ func (c *CarnivalService) generateNodeFromCategory(nodeNumber int, categoryID uu
 }
 
 func (c *CarnivalService) getCurrentNodeCategoryID(sessionID uuid.UUID, nodeNumber int) (uuid.UUID, error) {
-	s, err := c.sessionRepo.FindByID(sessionID)
+	currentSession, err := c.sessionRepo.FindByID(sessionID)
 	if err != nil {
 		return uuid.Nil, err
 	}
 
-	if nodeNumber < 1 || nodeNumber > len([]string(s.Categories)) {
+	if nodeNumber < 1 || nodeNumber > len([]string(currentSession.Categories)) {
 		return uuid.Nil, errors.New("invalid node number for session")
 	}
 
-	assignedCategoryName := ([]string(s.Categories))[nodeNumber-1] // Arrays are 0-indexed, nodes are 1-indexed
+	assignedCategoryName := ([]string(currentSession.Categories))[nodeNumber-1] // Arrays are 0-indexed, nodes are 1-indexed
 
 	categories, err := c.questionRepo.GetCategories()
 	if err != nil {
@@ -390,8 +392,8 @@ func (c *CarnivalService) getUnusedFunQuestionsForSession(sessionID uuid.UUID, l
 	return c.questionRepo.GetUnusedFunQuestionsForSession(sessionID, limit)
 }
 
-func (c *CarnivalService) addNodeTimePenalty(s *session.Session, nodeNumber int) error {
-	startTimeUnix, exists := s.NodeStartTimes[nodeNumber]
+func (c *CarnivalService) addNodeTimePenalty(currentSession *session.Session, nodeNumber int) error {
+	startTimeUnix, exists := currentSession.NodeStartTimes[nodeNumber]
 	if !exists {
 		return nil
 	}
@@ -401,22 +403,22 @@ func (c *CarnivalService) addNodeTimePenalty(s *session.Session, nodeNumber int)
 
 	nodePenalty := elapsedSeconds / config.TIME_PENALTY_INTERVAL_SECONDS
 
-	s.Score.TimePenalty += nodePenalty
+	currentSession.Score.TimePenalty += nodePenalty
 
 	return nil
 }
 
-func (c *CarnivalService) updateLeaderboardAfterNode(s *session.Session, result *AnswerResult) error {
-	s.Score = s.CalculateScore()
-	result.CurrentScore = s.Score.Final
+func (c *CarnivalService) updateLeaderboardAfterNode(currentSession *session.Session, result *AnswerResult) error {
+	currentSession.Score = currentSession.CalculateScore()
+	result.CurrentScore = currentSession.Score.Final
 
-	p, err := c.playerRepo.FindByID(s.PlayerID)
+	player, err := c.playerRepo.FindByID(currentSession.PlayerID)
 	if err != nil {
 		return err
 	}
 
-	currentTime := time.Since(s.StartedAt)
-	entry := leaderboard.NewEntry(p.ID, p.Name, s.ID, s.Score.Final, currentTime)
+	currentTime := time.Since(currentSession.StartedAt)
+	entry := leaderboard.NewEntry(player.ID, player.Name, currentSession.ID, currentSession.Score.Final, currentTime)
 	if err := c.leaderboardRepo.UpsertEntry(entry); err != nil {
 		return err
 	}

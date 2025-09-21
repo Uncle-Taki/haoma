@@ -14,17 +14,17 @@ import (
 type StringSlice []string
 
 // Value implements driver.Valuer interface for database serialization
-func (s StringSlice) Value() (driver.Value, error) {
-	if s == nil {
+func (slice StringSlice) Value() (driver.Value, error) {
+	if slice == nil {
 		return nil, nil
 	}
-	return json.Marshal([]string(s))
+	return json.Marshal([]string(slice))
 }
 
 // Scan implements sql.Scanner interface for database deserialization
-func (s *StringSlice) Scan(value interface{}) error {
+func (slice *StringSlice) Scan(value interface{}) error {
 	if value == nil {
-		*s = nil
+		*slice = nil
 		return nil
 	}
 
@@ -33,24 +33,24 @@ func (s *StringSlice) Scan(value interface{}) error {
 		return nil
 	}
 
-	return json.Unmarshal(bytes, (*[]string)(s))
+	return json.Unmarshal(bytes, (*[]string)(slice))
 }
 
 // IntMap is a custom type for proper JSON serialization with PostgreSQL
 type IntMap map[int]int64
 
 // Value implements driver.Valuer interface for database serialization
-func (m IntMap) Value() (driver.Value, error) {
-	if m == nil {
+func (intMap IntMap) Value() (driver.Value, error) {
+	if intMap == nil {
 		return nil, nil
 	}
-	return json.Marshal(map[int]int64(m))
+	return json.Marshal(map[int]int64(intMap))
 }
 
 // Scan implements sql.Scanner interface for database deserialization
-func (m *IntMap) Scan(value interface{}) error {
+func (intMap *IntMap) Scan(value interface{}) error {
 	if value == nil {
-		*m = nil
+		*intMap = nil
 		return nil
 	}
 
@@ -59,7 +59,7 @@ func (m *IntMap) Scan(value interface{}) error {
 		return nil
 	}
 
-	return json.Unmarshal(bytes, (*map[int]int64)(m))
+	return json.Unmarshal(bytes, (*map[int]int64)(intMap))
 }
 
 // Session orchestrates a player's journey through carnival nodes
@@ -88,27 +88,27 @@ type TimeWindow struct {
 	End   time.Time
 }
 
-func (s *Session) IsActive() bool {
-	if s.FinishedAt != nil {
+func (session *Session) IsActive() bool {
+	if session.FinishedAt != nil {
 		return false
 	}
 
-	elapsed := time.Since(s.StartedAt)
+	elapsed := time.Since(session.StartedAt)
 	return elapsed < config.MAX_SESSION_DURATION
 }
 
-func (s *Session) CalculateScore() Score {
+func (session *Session) CalculateScore() Score {
 	// Use the accumulated time penalty from completed nodes
-	final := (s.Score.Correct * config.CORRECT_ANSWER_MULTIPLIER) -
-		(s.Score.TimePenalty * config.PENALTY_MULTIPLIER)
+	final := (session.Score.Correct * config.CORRECT_ANSWER_MULTIPLIER) -
+		(session.Score.TimePenalty * config.PENALTY_MULTIPLIER)
 	if final < 0 {
 		final = config.DEFAULT_SCORE
 	}
 
 	return Score{
-		Correct:     s.Score.Correct,
-		Total:       s.Score.Total,
-		TimePenalty: s.Score.TimePenalty,
+		Correct:     session.Score.Correct,
+		Total:       session.Score.Total,
+		TimePenalty: session.Score.TimePenalty,
 		Final:       final,
 	}
 }
