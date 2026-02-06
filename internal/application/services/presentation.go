@@ -494,6 +494,8 @@ func (pg *PresentationGenerator) parseMarpMarkdown(filePath string) ([]Slide, er
 				continue
 			} else if inFrontmatter {
 				inFrontmatter = false
+				// Start first slide after frontmatter
+				currentSlide = &Slide{}
 				continue
 			} else {
 				// New slide separator
