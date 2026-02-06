@@ -1,7 +1,7 @@
 # Haoma - Black-Box Carnival Makefile
 # Persian god meets Go development
 
-.PHONY: help deps build run test lint clean seed docker dev
+.PHONY: help deps build run test lint clean seed docker dev build-pptx-generator generate-pptx
 
 # Default target
 help: ## Show this help message
@@ -94,7 +94,27 @@ clean: ## Clean build artifacts
 	rm -rf api/docs.go api/swagger.json api/swagger.yaml
 	rm -f haoma.db
 	rm -f coverage.out coverage.html
+	rm -f pptx-generator
+	rm -f *.pptx
 	go clean
+
+build-pptx-generator: deps ## Build PowerPoint presentation generator
+	@echo "📊 Building PowerPoint generator..."
+	go build -o pptx-generator ./cmd/pptx-generator/main.go
+
+generate-pptx: build-pptx-generator ## Generate PowerPoint from Marp markdown (INPUT=file.md OUTPUT=file.pptx)
+	@echo "🎨 Generating PowerPoint presentation..."
+	@if [ -z "$(INPUT)" ]; then \
+		echo "Usage: make generate-pptx INPUT=data/slides.md OUTPUT=output.pptx"; \
+		echo "Example: make generate-pptx INPUT=data/yggdrasil-slides.md OUTPUT=yggdrasil.pptx"; \
+		exit 1; \
+	fi
+	@OUTPUT_FILE="$(OUTPUT)"; \
+	if [ -z "$$OUTPUT_FILE" ]; then \
+		OUTPUT_FILE="output.pptx"; \
+	fi; \
+	./pptx-generator -input "$(INPUT)" -output "$$OUTPUT_FILE"
+
 
 docker-build: ## Build Docker image
 	@echo "🐳 Containerizing the carnival..."
