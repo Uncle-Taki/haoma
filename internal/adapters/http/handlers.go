@@ -69,6 +69,44 @@ func RegisterRoutes(router *gin.Engine, db *persistence.Database) {
 		// Public leaderboard (no authentication needed)
 		api.GET("/leaderboard", handler.GetLeaderboard)
 	}
+
+	// --- Veterinary Care Service Routes ---
+	vetUserRepo := persistence.NewVetUserRepository(db.DB)
+	appointmentRepo := persistence.NewAppointmentRepository(db.DB)
+	inventoryRepo := persistence.NewInventoryItemRepository(db.DB)
+	vetService := services.NewVetService(vetUserRepo, appointmentRepo, inventoryRepo)
+	vetHandler := &VetHandler{service: vetService}
+
+	vet := router.Group("/api/v1/vet")
+	{
+		// Public vet auth routes
+		vetAuth := vet.Group("/auth")
+		{
+			vetAuth.POST("/signup", vetHandler.VetSignup)
+			vetAuth.POST("/login", vetHandler.VetLogin)
+		}
+
+		// Protected vet auth routes
+		vetAuthProtected := vet.Group("/auth")
+		vetAuthProtected.Use(jwtMiddleware)
+		{
+			vetAuthProtected.GET("/profile", vetHandler.VetProfile)
+		}
+
+		// Protected appointment routes
+		appointments := vet.Group("/appointments")
+		appointments.Use(jwtMiddleware)
+		{
+			appointments.POST("", vetHandler.BookAppointment)
+			appointments.GET("", vetHandler.GetMyAppointments)
+			appointments.GET("/today", vetHandler.GetTodayAppointments)
+			appointments.POST("/:id/cancel", vetHandler.CancelAppointment)
+		}
+
+		// Public inventory routes (browsable without auth)
+		vet.GET("/inventory", vetHandler.GetInventory)
+		vet.GET("/inventory/:id", vetHandler.GetInventoryItem)
+	}
 }
 
 // StartSessionRequest represents the request to begin a carnival journey (no player_id needed - from JWT)

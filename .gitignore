@@ -51,3 +51,10 @@ api/swagger.json
 # Excel files (if they contain sensitive data)
 # Uncomment if needed:
 # data/*.xlsx
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+
+# Ansible
+ansible/*.retry

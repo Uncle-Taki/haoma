@@ -6,10 +6,13 @@ import (
 	"strconv"
 
 	"haoma/internal/config"
+	"haoma/internal/domain/appointment"
+	"haoma/internal/domain/inventory"
 	"haoma/internal/domain/leaderboard"
 	"haoma/internal/domain/player"
 	"haoma/internal/domain/question"
 	"haoma/internal/domain/session"
+	userDomain "haoma/internal/domain/user"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -48,6 +51,10 @@ func NewDatabase() (*Database, error) {
 		&player.Player{},
 		&player.Attempt{},
 		&leaderboard.Entry{},
+		// Veterinary care service models
+		&userDomain.User{},
+		&appointment.Appointment{},
+		&inventory.InventoryItem{},
 	)
 	if err != nil {
 		return nil, err
